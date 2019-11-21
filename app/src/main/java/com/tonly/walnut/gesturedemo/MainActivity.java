@@ -1,8 +1,8 @@
 package com.tonly.walnut.gesturedemo;
 
-import android.Manifest;
 import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.MediaPlayer;
@@ -13,11 +13,9 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.widget.ImageView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -30,11 +28,10 @@ public class MainActivity extends AppCompatActivity {
     private ImageView iv;
     private int mIndex = 0;
     private MediaPlayer mediaPlayer;
-    private List<Bitmap> mList;
+//    private List<Bitmap> mList;
     private List<String> mp3List = new ArrayList<>();
+    private List<Integer> localPic = new ArrayList<>();
     private String mp3Path;
-    public static final int KEY_RIGHT = 0X04;
-    public static final int KEY_LEFT = 0X08;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,30 +57,61 @@ public class MainActivity extends AppCompatActivity {
                 mediaPlayer.start();
             }
         });
-        boolean isGrantRead = ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
-        boolean isGrantWrite = ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
-        String path = "";
-        if (isGrantRead && isGrantWrite) {
-            path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Walnut/";
-            File file = new File(path);
-            if (!file.exists()) {
-                file.mkdirs();
-            }
-        } else {
-            String[] permissions = {Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE};
-            ActivityCompat.requestPermissions(this, permissions, 0x01);
-        }
+//        boolean isGrantRead = ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
+//        boolean isGrantWrite = ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
+//        String path = "";
+//        if (isGrantRead && isGrantWrite) {
+//            path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Walnut/";
+//            File file = new File(path);
+//            if (!file.exists()) {
+//                file.mkdirs();
+//            }
+//        } else {
+//            String[] permissions = {Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE};
+//            ActivityCompat.requestPermissions(this, permissions, 0x01);
+//        }
+        localPic.add(R.mipmap.test);
+        localPic.add(R.mipmap.test2);
+        localPic.add(R.mipmap.test3);
+        localPic.add(R.mipmap.test4);
+        localPic.add(R.mipmap.test5);
         iv = findViewById(R.id.iv);
-        if (!TextUtils.isEmpty(path)) {
-            mList = getFileName(path);
-        }
-        if (null != mp3List && mp3List.size() > 0) {
-            mp3Path = mp3List.get(0);
-            playFlieMp3(mp3Path);
-        } else {
-            playSoundFromA();
-        }
+        iv.setImageResource(localPic.get(mIndex));
+//        mHandler.sendMessageDelayed(mHandler.obtainMessage(0x01), 1000);
+//        if (!TextUtils.isEmpty(path)) {
+//            mList = getFileName(path);
+//            if (null != mList && mList.size() > 0) {
+//                iv.setImageBitmap(mList.get(0));
+//            } else {
+//                iv.setImageResource(R.mipmap.test);
+//            }
+//        }
+//        if (null != mp3List && mp3List.size() > 0) {
+//            mp3Path = mp3List.get(0);
+//            playFileMp3(mp3Path);
+//        } else {
+        playSoundFromA();
+//        }
     }
+
+//    @SuppressLint("HandlerLeak")
+//    private Handler mHandler = new Handler() {
+//        @Override
+//        public void handleMessage(@NonNull Message msg) {
+//            super.handleMessage(msg);
+//            switch (msg.what) {
+//                case 0x01:
+//                    if (mIndex >= localPic.size() - 1) {
+//                        mIndex = 0;
+//                    } else {
+//                        mIndex++;
+//                    }
+//                    iv.setImageResource(localPic.get(mIndex));
+//                    sendMessageDelayed(obtainMessage(0x01), 1000);
+//                    break;
+//            }
+//        }
+//    };
 
     public List<Bitmap> getFileName(String fileAbsolutePath) {
         List<Bitmap> vecFile = new ArrayList<>();
@@ -95,9 +123,9 @@ public class MainActivity extends AppCompatActivity {
             if (!value.isDirectory()) {
                 String filename = value.getName();
                 if (filename.toLowerCase().contains("png") || filename.toLowerCase().contains("jpg")) {
-                    Bitmap bitmap = getLoacalBitmap(value.getPath());
+                    Bitmap bitmap = getLocalBitmap(value.getPath());
                     vecFile.add(bitmap);
-                } else if (filename.toLowerCase().contains("mp3")||filename.toLowerCase().contains("wav")) {
+                } else if (filename.toLowerCase().contains("mp3") || filename.toLowerCase().contains("wav")) {
                     mp3List.add(value.getPath());
                 }
                 Log.e("eee", "文件名 ： " + filename);
@@ -134,47 +162,66 @@ public class MainActivity extends AppCompatActivity {
         if (TextUtils.isEmpty(mp3Path)) {
             playSoundFromA();
         } else {
-            playFlieMp3(mp3Path);
+            playFileMp3(mp3Path);
         }
     }
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (keyCode == KEY_RIGHT) {
-            Toast.makeText(this, "RIGHT", Toast.LENGTH_LONG).show();
-            nextPic();
-        } else if (keyCode == KEY_LEFT) {
-            Toast.makeText(this, "LEFT", Toast.LENGTH_LONG).show();
-            prePic();
+//        Toast.makeText(this, "keyCode:" + keyCode, Toast.LENGTH_LONG).show();
+        Log.i(TAG, "keyCode:" + keyCode);
+        int orientation = getOrientation();
+        if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
+//                Toast.makeText(this, "RIGHT", Toast.LENGTH_LONG).show();
+                nextPic();
+            } else if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) {
+//                Toast.makeText(this, "LEFT", Toast.LENGTH_LONG).show();
+                prePic();
+            }
+        } else if (orientation == Configuration.ORIENTATION_PORTRAIT) {
+            if (keyCode == KeyEvent.KEYCODE_DPAD_UP) {
+//                Toast.makeText(this, "UP", Toast.LENGTH_LONG).show();
+                nextPic();
+            } else if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
+//                Toast.makeText(this, "DOWN", Toast.LENGTH_LONG).show();
+                prePic();
+            }
         }
-        iv.setImageBitmap(mList.get(mIndex));
+        if (null != localPic && localPic.size() > 0)
+            iv.setImageResource(localPic.get(mIndex));
+        Log.i(TAG, "orientation:" + orientation);
         return super.onKeyDown(keyCode, event);
     }
 
+    private int getOrientation() {
+        Configuration mConfiguration = this.getResources().getConfiguration(); //获取设置的配置信息
+        return mConfiguration.orientation;
+    }
+
     private void nextPic() {
-        if (null != mList && mList.size() > 0) {
-//            if (mIndex >= mList.size() - 1) {
-//                mIndex = 0;
-//            } else {
-//                mIndex++;
-//            }
-            int size = mList.size();
-            mIndex = (mIndex++) % size;
+        if (null != localPic && localPic.size() > 0) {
+            if (mIndex >= localPic.size() - 1) {
+                mIndex = 0;
+            } else {
+                mIndex++;
+            }
+//            int size = mList.size();
+//            mIndex = (mIndex++) % size;
         }
     }
 
     private void prePic() {
-        if (null != mList && mList.size() > 0) {
-//            if (mIndex == 0) {
-//                mIndex = mList.size() - 1;
-//            } else {
-//                mIndex--;
-//            }
-
-            int size = mList.size();
-            if (mIndex <= 0)
-                mIndex = size;
-            mIndex = (mIndex--) % size;
+        if (null != localPic && localPic.size() > 0) {
+            if (mIndex == 0) {
+                mIndex = localPic.size() - 1;
+            } else {
+                mIndex--;
+            }
+//            int size = mList.size();
+//            if (mIndex <= 0)
+//                mIndex = size;
+//            mIndex = (mIndex--) % size;
         }
     }
 
@@ -205,7 +252,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void playFlieMp3(String path) {
+    private void playFileMp3(String path) {
         if (null != mediaPlayer) {
             if (mediaPlayer.isPlaying()) {
                 mediaPlayer.stop();
@@ -233,7 +280,7 @@ public class MainActivity extends AppCompatActivity {
      * @param url
      * @return
      */
-    public static Bitmap getLoacalBitmap(String url) {
+    public static Bitmap getLocalBitmap(String url) {
         Bitmap bitmap = null;
         try {
             FileInputStream fis = new FileInputStream(url);
@@ -253,5 +300,10 @@ public class MainActivity extends AppCompatActivity {
             mediaPlayer.release();
             mediaPlayer = null;
         }
+    }
+
+    @Override
+    public void onBackPressed() {
+//        super.onBackPressed();
     }
 }
